@@ -1,42 +1,47 @@
 <?php
 	$rootdir = "./home";
 	$imagedir = "./images";
+	$_self = $_SERVER['PHP_SELF'];
 
 	if (!is_dir($rootdir))
 	{
 		echo "Unable to get access to $rootdir, contact your web administrator.";
 		die();
 	}
-	
+
+if(isset($_GET['path'])){
 	$currentdir = $_GET['path'];
-	
+}
+
 	// on tronque le debut si c'est un /
 	if (substr($currentdir,0,1) == "/")
 	{
 		$currentdir = substr($currentdir,1,strlen($currentdir) - 1);
 	}
-	
+
 	// si la fin de $currentdir = .. alors on retourne a la racine de ce dossier
 	if (substr($currentdir, strlen($currentdir) - 2, 2) == "..")
 	{
 		// strip last /..
 		$currentdir = substr($currentdir, 0, strlen($currentdir) - 3);
-		
+
 		// strip last /dirname
 		$currentdir = substr($currentdir, 0, strrpos($currentdir,"/"));
 	}
-	
+
 	// si la fin de $currentdir = /. alors on retourne a la racine de ce dossier
 	if (substr($currentdir, strlen($currentdir) - 2, 2) == "/.")
 	{
 		$currentdir = substr($currentdir, 0,strlen($currentdir) - 2);
 	}
-	
+
 	// evite tout probleme de securite MAISempeche les nom de rep avec .. dedans
 	$currentdir = str_replace("..", "", $currentdir);
 
 	// on traite les actions spéciales
-	$action = $_GET['action'];
+	if(isset($_GET['action'])){
+		$action = $_GET['action'];
+
 	switch($action)
 	{
 		case "mkdir":
@@ -46,7 +51,7 @@
 				$mkdir = str_replace("..", "", $_GET['arg']);
 				// umask 0 = read, write and execute
 				umask (0);
-				mkdir($rootdir . "/" . $currentdir . "/" . $mkdir);			
+				mkdir($rootdir . "/" . $currentdir . "/" . $mkdir);
 			}
 			else
 			{
@@ -54,13 +59,13 @@
 
 			}
 			break;
-		
+
 		case "rm";
 			if (isset($_GET['confirmation']))
 			{
 				// evite tout probleme de securite MAIS empeche les nom de rep avec .. dedans
 				$rm = str_replace("..", "", $_GET['path']);
-				
+
 				if (isset($_GET['file']))
 				{
 					$rm = $rm . "/" . str_replace("..","", $_GET['file']) ;
@@ -76,43 +81,45 @@
 			// si l'on ne supprimait pas un fichier (donc un rep, on doit retourner a la racine quelque soit la reponse
 			if ((isset($_GET['confirmation']) || isset($_GET['infirmation']) ) && ! isset($_GET['file']))
 				// strip last /dirname pour retourner au parent du rep en cours
-				$currentdir = substr($currentdir, 0, strrpos($currentdir,"/"));					
+				$currentdir = substr($currentdir, 0, strrpos($currentdir,"/"));
 			break;
-			
+
 		case "deconnection":
-		
+
 			break;
-			
+
 		case "upload":
 			if (!isset($_FILES['uploadFile']))
 			$affiche_upload_formulaire = true;
 			break;
 
 	}
-	
+
+}
+
 	// l'upload se fait en post (l'action)
 	if (isset($_POST['action']) && $_POST['action'] == "upload")
 	{
 		if (isset($_FILES['uploadFile']))
 		{
 			$file_name = $_FILES['uploadFile']['name'];
-			
+
 			// strip file_name of slashes
 			$file_name = stripslashes($file_name);
-			if ($_POST['date']) 
+			if ($_POST['date'])
 			{
 				$file_name = date("d-m-Y-H\hi - ") . $file_name;
 			}
-			
+
 			$uploaddir = $rootdir . "/" .  str_replace("..","",urldecode($_POST['path']));
-			
+
 			$file_name = $uploaddir . "/" . str_replace("'","",$file_name);
 			$copy = copy($_FILES['uploadFile']['tmp_name'],$file_name);
 			// check if successfully copied
 			if( ! $copy)
 			{
 			 	echo basename($file_name) . " | <b>Impossible d'uploader</b>!<br>";
-			}				
+			}
 		}
 	}
 ?>
@@ -136,8 +143,8 @@
             <table class="table">
                 <tr>
                     <td>
-			<a href="<?php echo $_self . "?path=";  ?>"><i class="fas fa-home"></i> Racine</a> | 
-			<a href="<?php echo $_self . "?action=mkdir&path=" . urlencode($currentdir); ?>"><i class="fas fa-folder-plus"></i> Creer Repertoire</a> |  
+			<a href="<?php echo $_self . "?path="; ?>"><i class="fas fa-home"></i> Racine</a> |
+			<a href="<?php echo $_self . "?action=mkdir&path=" . urlencode($currentdir); ?>"><i class="fas fa-folder-plus"></i> Creer Repertoire</a> |
 			<a href="<?php echo $_self . "?action=upload&path=" . urlencode($currentdir); ?>"><i class="fas fa-upload"></i> Uploader</a>
 	           </td>
 		   <!--<td align=right>Deconnecter</td>-->
@@ -145,7 +152,7 @@
 	    </table>
 <?php
 
-if ($affiche_creer_formulaire)
+if (isset($affiche_creer_formulaire))
 {
 	// affichage du formulaire pour creer un repertoire
 	?>
@@ -159,7 +166,7 @@ if ($affiche_creer_formulaire)
 	<?php
 }
 
-if ($affiche_supprimer_formulaire)
+if (isset($affiche_supprimer_formulaire))
 {
 	// affichage du formulaire pour supprimer un repertoire
 	?>
@@ -171,14 +178,14 @@ if ($affiche_supprimer_formulaire)
 			echo "<input type=\"hidden\" name=\"file\" value=\"" . $_GET['file'] . "\">";
 		?>
 		<input type="hidden" name="action" value="rm">
-		Supprimer <?php echo $currentdir . "/"; if (isset($_GET['file'])) echo $_GET['file']; ?> ? 
+		Supprimer <?php echo $currentdir . "/"; if (isset($_GET['file'])) echo $_GET['file']; ?> ?
 		<input type="submit" name="confirmation" value="Oui">
 		<input type="submit" name="infirmation" value="Non">
 	</form>
 	<?php
 }
 
-if ($affiche_upload_formulaire)
+if (isset($affiche_upload_formulaire))
 {
 	?>
 	<hr>
@@ -198,7 +205,7 @@ if ($affiche_upload_formulaire)
 <tr>
 <td valign="top" width="20%">
 	<!-- Colonne pour les repertoires -->
-	
+
 	<table class="table">
 	<tr>
 	    <td colspan="3">
@@ -208,10 +215,10 @@ if ($affiche_upload_formulaire)
 		    </tr>
 		</table>
 	    </td>
-	</tr>	
+	</tr>
 	<?php
 		$directory = opendir( $rootdir . "/" . $currentdir );
-		while($dir = readdir($directory))	
+		while($dir = readdir($directory))
 		{
 			if (is_dir( $rootdir . "/" . $currentdir . "/" . $dir) && $dir != "." )
 			{
@@ -251,13 +258,13 @@ if ($affiche_upload_formulaire)
 
 		$directory = opendir( $rootdir . "/" . $currentdir );
 		$foundone = false;
-		while( $file = readdir($directory) )	
+		while( $file = readdir($directory) )
 		{
 			if (is_file($rootdir . "/" . $currentdir . "/" . $file) )
 			{
 				$foundone = true;
 				echo "<tr><td width=\"30\" height=\"35\">";
-			
+
 				// selon l'extension du fichier
 				$ext = strtolower(substr($file,strrpos($file,".") + 1,strlen($file) - strrpos($file,".")));
 				switch($ext)
@@ -282,13 +289,13 @@ if ($affiche_upload_formulaire)
 				echo "</td></tr>\n";
 			}
 		}
-		closedir($directory);	
+		closedir($directory);
 		if (!$foundone)
 		{
 			echo "<tr><td colspan=\"3\" align=\"center\"><b>Aucun fichier !</b></td></tr>";
 		}
 	?>
-		
+
 	</table>
 
 </td>
