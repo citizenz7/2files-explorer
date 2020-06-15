@@ -1,0 +1,11 @@
+LANEY VC-30 112 tubes :
+
+Actuel :
+V1 : TAD ECC83
+V2, V3 : RUBY 12AX7AC5 HG
+V4, V5, V6, V7 : RUBY EL84C #1552 TC 2600 PC16
+
+Upgrade :
+V1 : TAD RT010
+V2, V3 : TAD RT011 Mullard
+V4, V5, V6, V7 : TAD RT874 quartet
